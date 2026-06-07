@@ -1,0 +1,29 @@
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+DATA_DIR = PROJECT_ROOT / "data"
+RAW_DATA_DIR = DATA_DIR / "raw" / "MSD_Task06_Lung"
+DATASET_DIR = RAW_DATA_DIR / "Task06_Lung"
+
+IMAGES_TR_DIR = DATASET_DIR / "imagesTr"
+LABELS_TR_DIR = DATASET_DIR / "labelsTr"
+IMAGES_TS_DIR = DATASET_DIR / "imagesTs"
+
+PROCESSED_DATA_DIR = DATA_DIR / "processed"
+SAMPLES_DIR = DATA_DIR / "samples"
+
+OUTPUTS_DIR = PROJECT_ROOT / "outputs"
+CHECKPOINTS_DIR = OUTPUTS_DIR / "checkpoints"
+PREDICTIONS_DIR = OUTPUTS_DIR / "predictions"
+MASKS_DIR = OUTPUTS_DIR / "masks"
+OVERLAYS_DIR = OUTPUTS_DIR / "overlays"
+METRICS_DIR = OUTPUTS_DIR / "metrics"
+
+HU_MIN = -1000
+HU_MAX = 400
+
+IMAGE_SIZE = 256
+BATCH_SIZE = 4
+NUM_EPOCHS = 50
+LEARNING_RATE = 1e-4

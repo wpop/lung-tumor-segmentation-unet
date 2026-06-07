@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data
+data/raw/
+data/processed/
+data/samples/
+
+# Outputs
+outputs/checkpoints/
+outputs/predictions/
+outputs/masks/
+outputs/overlays/
+outputs/metrics/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
