@@ -37,19 +37,21 @@ class BCEDiceLoss(nn.Module):
     Combined BCEWithLogits loss and Dice loss for binary segmentation.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, bce_weight: float = 0.3, dice_weight: float = 0.7) -> None:
         super().__init__()
+        self.bce_weight = bce_weight
+        self.dice_weight = dice_weight
         self.bce_loss = nn.BCEWithLogitsLoss()
         self.dice_loss = DiceLoss()
 
     def forward(self, logits: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
         """
-        Compute BCE loss plus Dice loss.
+        Compute weighted BCE loss plus weighted Dice loss.
         """
         bce_loss = self.bce_loss(logits, targets)
         dice_loss = self.dice_loss(logits, targets)
 
-        return bce_loss + dice_loss
+        return self.bce_weight * bce_loss + self.dice_weight * dice_loss
 
 
 if __name__ == "__main__":
