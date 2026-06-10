@@ -17,12 +17,12 @@ data/raw/
 data/processed/
 data/samples/
 
-# Outputs
-outputs/checkpoints/
-outputs/predictions/
-outputs/masks/
-outputs/overlays/
-outputs/metrics/
+# Outputs and generated artifacts
+outputs/
+*.pt
+*.pth
+*.nii
+*.nii.gz
 
 # IDE
 .vscode/
