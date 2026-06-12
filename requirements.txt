@@ -1,1 +1,12 @@
-pip freeze > requirements.txt
+# Core dependencies for Lung Tumor Segmentation U-Net
+matplotlib
+monai
+nibabel
+numpy
+opencv-python
+pandas
+Pillow
+scikit-image
+torch
+torchvision
+tqdm
