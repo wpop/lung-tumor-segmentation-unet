@@ -1,0 +1,9 @@
+numpy
+pandas
+matplotlib
+nibabel
+monai
+tqdm
+scikit-image
+Pillow
+opencv-python-headless
