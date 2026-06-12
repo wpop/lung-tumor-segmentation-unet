@@ -1,6 +1,6 @@
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from src.config import (
@@ -13,6 +13,7 @@ from src.config import (
     NUM_EPOCHS,
 )
 from src.data.dataset import LungTumorSliceDataset2D
+from src.data.splits import create_patient_split
 from src.models.losses import BCEDiceLoss
 from src.models.unet2d import UNet2D
 from src.training.metrics import (
@@ -30,14 +31,30 @@ def main() -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    full_dataset = LungTumorSliceDataset2D(IMAGES_TR_DIR, LABELS_TR_DIR)
-    train_size = int(0.8 * len(full_dataset))
-    val_size = len(full_dataset) - train_size
+    (
+        train_image_paths,
+        train_mask_paths,
+        val_image_paths,
+        val_mask_paths,
+    ) = create_patient_split(IMAGES_TR_DIR, LABELS_TR_DIR, val_fraction=0.2, seed=42)
 
-    # Split the available labeled slices into training and validation sets.
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
-    print(f"Training slices: {len(train_dataset)}")
-    print(f"Validation slices: {len(val_dataset)}")
+    train_dataset = LungTumorSliceDataset2D(
+        image_paths=train_image_paths,
+        mask_paths=train_mask_paths,
+        negative_ratio=0.3,
+        seed=42,
+    )
+    val_dataset = LungTumorSliceDataset2D(
+        image_paths=val_image_paths,
+        mask_paths=val_mask_paths,
+        negative_ratio=0.3,
+        seed=42,
+    )
+
+    print(f"Train patient count: {len(train_image_paths)}")
+    print(f"Validation patient count: {len(val_image_paths)}")
+    print(f"Train slice count: {len(train_dataset)}")
+    print(f"Validation slice count: {len(val_dataset)}")
 
     train_loader = DataLoader(
         train_dataset,

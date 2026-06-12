@@ -1,4 +1,5 @@
 from pathlib import Path
+import random
 
 import nibabel as nib
 import numpy as np
@@ -63,15 +64,44 @@ class LungTumorSliceDataset2D(Dataset):
     PyTorch Dataset for loading 2D axial slices that contain tumor pixels.
     """
 
-    def __init__(self, image_dir: str | Path, mask_dir: str | Path) -> None:
+    def __init__(
+        self,
+        image_dir: str | Path | None = None,
+        mask_dir: str | Path | None = None,
+        image_paths: list[str | Path] | None = None,
+        mask_paths: list[str | Path] | None = None,
+        negative_ratio: float = 0.0,
+        seed: int = 42,
+    ) -> None:
         """
         Find matching image and mask files, then index slices with positive masks.
-        """
-        self.image_dir = Path(image_dir)
-        self.mask_dir = Path(mask_dir)
 
-        image_paths = sorted(self.image_dir.glob("*.nii.gz"))
-        mask_paths = sorted(self.mask_dir.glob("*.nii.gz"))
+        Files can come from directories or from explicit image and mask path lists.
+        All positive slices are included. A random sample of negative slices can
+        also be included by setting negative_ratio greater than 0.
+        """
+        if negative_ratio < 0:
+            raise ValueError("negative_ratio must be 0 or greater.")
+
+        if (image_paths is None) != (mask_paths is None):
+            raise ValueError(
+                "Provide both image_paths and mask_paths, or provide neither."
+            )
+
+        if image_paths is not None and mask_paths is not None:
+            image_paths = [Path(path) for path in image_paths]
+            mask_paths = [Path(path) for path in mask_paths]
+        else:
+            if image_dir is None or mask_dir is None:
+                raise ValueError(
+                    "Provide image_paths and mask_paths, or provide image_dir and mask_dir."
+                )
+
+            self.image_dir = Path(image_dir)
+            self.mask_dir = Path(mask_dir)
+
+            image_paths = sorted(self.image_dir.glob("*.nii.gz"))
+            mask_paths = sorted(self.mask_dir.glob("*.nii.gz"))
 
         image_files = {path.name: path for path in image_paths}
         mask_files = {path.name: path for path in mask_paths}
@@ -86,24 +116,39 @@ class LungTumorSliceDataset2D(Dataset):
                 f"Missing images: {missing_images}."
             )
 
-        self.slice_index: list[tuple[Path, Path, int]] = []
+        self.image_paths = [image_files[name] for name in sorted(image_files)]
+        self.mask_paths = [mask_files[name] for name in sorted(mask_files)]
+        positive_slices: list[tuple[Path, Path, int]] = []
+        negative_slices: list[tuple[Path, Path, int]] = []
 
-        for filename in sorted(image_files):
-            image_path = image_files[filename]
-            mask_path = mask_files[filename]
-
-            # Load the mask once here so we can find slices that contain tumor.
+        for image_path, mask_path in zip(self.image_paths, self.mask_paths):
+            # Load the mask once here so we can find positive and negative slices.
             mask_volume = nib.load(mask_path).get_fdata()
 
             for index in range(mask_volume.shape[2]):
                 mask_slice = mask_volume[:, :, index]
+                slice_info = (image_path, mask_path, index)
 
                 if np.any(mask_slice > 0):
-                    self.slice_index.append((image_path, mask_path, index))
+                    positive_slices.append(slice_info)
+                else:
+                    negative_slices.append(slice_info)
+
+        selected_negative_slices: list[tuple[Path, Path, int]] = []
+
+        if negative_ratio > 0:
+            negative_count = int(len(positive_slices) * negative_ratio)
+            negative_count = min(negative_count, len(negative_slices))
+
+            # Use a local random generator so sampling is reproducible.
+            rng = random.Random(seed)
+            selected_negative_slices = rng.sample(negative_slices, negative_count)
+
+        self.slice_index = positive_slices + selected_negative_slices
 
     def __len__(self) -> int:
         """
-        Return the number of tumor-containing 2D slices.
+        Return the number of selected 2D slices.
         """
         return len(self.slice_index)
 

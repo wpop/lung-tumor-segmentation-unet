@@ -18,8 +18,8 @@ def main() -> None:
     Search prediction thresholds for the best 2D U-Net checkpoint.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    checkpoint_path = CHECKPOINTS_DIR / "best_unet2d.pt"
-    thresholds = [0.1, 0.2, 0.3, 0.4, 0.5]
+    checkpoint_path = CHECKPOINTS_DIR / "unet2d_epoch_15.pt"
+    thresholds = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5]
     max_batches = 50
 
     print(f"Using device: {device}")
@@ -30,7 +30,11 @@ def main() -> None:
 
     model = UNet2D(in_channels=1, out_channels=1).to(device)
     checkpoint = torch.load(checkpoint_path, map_location=device)
-    model.load_state_dict(checkpoint["model_state_dict"])
+    # Support both full training checkpoints and raw model state_dict files.
+    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+        model.load_state_dict(checkpoint["model_state_dict"])
+    else:
+        model.load_state_dict(checkpoint)
     model.eval()
 
     results = []
